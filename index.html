@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="stylesheet" href="/styles.css" />
   <meta charset="UTF-8" />
   <title>Tube Status</title>
 
@@ -12,44 +13,53 @@
   <link rel="manifest" href="/manifest.json" />
 </head>
 <body>
-  <h1>🚇 Tube Status</h1>
+  <div class="container">
+    <div class="header">
+      <h1>🚇 Tube Status</h1>
+    </div>
 
-  <label>
-    Line
-    <select id="line">
-      <option value="northern">Northern</option>
-      <option value="central">Central</option>
-      <option value="victoria">Victoria</option>
-      <option value="jubilee">Jubilee</option>
-      <option value="piccadilly">Piccadilly</option>
-      <option value="district">District</option>
-    </select>
-  </label>
+    <div class="card">
+      <div class="field">
+        <span class="label">Line</span>
+        <select id="line">
+          <option value="northern">Northern</option>
+          <option value="central">Central</option>
+          <option value="victoria">Victoria</option>
+          <option value="jubilee">Jubilee</option>
+          <option value="piccadilly">Piccadilly</option>
+          <option value="district">District</option>
+        </select>
+      </div>
 
-  <br /><br />
+      <div class="field">
+        <span class="label">Time</span>
+        <input type="time" id="time" value="07:45" />
+      </div>
 
-  <label>
-    Time
-    <input type="time" id="time" value="07:45" />
-  </label>
+      <div class="field">
+        <span class="label">Notify</span>
+        <select id="schedule">
+          <option value="off">Off</option>
+          <option value="weekdays" selected>Weekdays</option>
+          <option value="daily">Every day</option>
+        </select>
+      </div>
 
-<br /><br />
+      <div class="buttons">
+        <button id="enable" class="primary">Enable notifications</button>
+        <button id="disable" class="danger">Disable notifications</button>
+        <button id="test" disabled>Send test notification</button>
+      </div>
 
-<label>
-  Notify
-  <select id="schedule">
-    <option value="off">Off</option>
-    <option value="weekdays" selected>Weekdays</option>
-    <option value="daily">Every day</option>
-  </select>
-</label>
-  
-  <br /><br />
+      <div id="status" class="status"></div>
+    </div>
 
-  <button id="enable">Enable notifications</button>
-  <button id="test" disabled>Send test notification</button>
-  <button id="disable">Disable notifications</button>
-  
+    <div class="footer">
+      Add to Home Screen for notifications on iOS.
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
+
 
