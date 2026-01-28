@@ -5,7 +5,7 @@ const SAVE_URL =
   "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/save-subscription";
 
 // VAPID public key (from secrets → but you need it in the frontend)
-const VAPID_PUBLIC_KEY = "55505d608dfcbfd2793c62ed11bcb076dac8047f3404326a432b9b771aebf2e3";
+const VAPID_PUBLIC_KEY = "BKM02271RwNzLQj7-CF9DxQIVfTCgLSxnJ0edL0_BpFCvMI70mrTax9lybBW8j95AzPu4TMFR-w9QA2CnxV6PkQ";
 
 // Helper: base64url -> Uint8Array
 function urlBase64ToUint8Array(base64String) {
