@@ -8,6 +8,10 @@
   --radius: 16px;
 }
 
+.card {
+  overflow: hidden;
+}
+
 * { box-sizing: border-box; }
 
 select,
