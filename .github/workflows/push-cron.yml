@@ -14,6 +14,4 @@ jobs:
           set -e
           curl -i -s -X POST "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/send-due-notifications" \
             -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             -d '{}'
