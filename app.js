@@ -34,8 +34,7 @@ document.getElementById("enable").onclick = async () => {
 
 document.getElementById("test").onclick = async () => {
   try {
-    // hardcoded for now; we’ll replace with a dropdown next
-    const line = "northern";
+    const line = document.getElementById("line").value;
     const message = await fetchLineStatus(line);
 
     registration.showNotification("🚇 Tube Status", {
