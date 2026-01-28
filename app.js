@@ -105,8 +105,12 @@ enableBtn?.addEventListener("click", async () => {
     }
 
     const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      throw new Error("Notification permission denied");
+alert(`Permission result: ${permission}`); // <-- temporary
+
+if (permission !== "granted") {
+  throw new Error("Notifications not allowed");
+}
+
     }
 
     await registerServiceWorker();
