@@ -38,11 +38,13 @@ async function enableAndSubscribe() {
 
 const sub = await registration.pushManager.subscribe({
   userVisibleOnly: true,
+  const publicKey = await getVapidPublicKey();
+
+const sub = await registration.pushManager.subscribe({
+  userVisibleOnly: true,
   applicationServerKey: urlBase64ToUint8Array(publicKey),
 });
 
-  return sub;
-}
 
 async function savePreferences(subscription) {
   const line = document.getElementById("line").value;
