@@ -1,46 +1,67 @@
 let registration;
 
-// ✅ Put your Supabase function URL here
-const STATUS_URL =
-  "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/get-line-status?line=";
+// Your Supabase endpoints
+const SAVE_URL =
+  "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/save-subscription";
+
+// VAPID public key (from secrets → but you need it in the frontend)
+const VAPID_PUBLIC_KEY = "55505d608dfcbfd2793c62ed11bcb076dac8047f3404326a432b9b771aebf2e3";
+
+// Helper: base64url -> Uint8Array
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
 
 async function registerServiceWorker() {
   registration = await navigator.serviceWorker.register("/sw.js");
 }
 
-// Ask iOS for notification permission
-async function enableNotifications() {
+async function enableAndSubscribe() {
   const permission = await Notification.requestPermission();
-  if (permission !== "granted") {
-    alert("Notifications not allowed");
-    return false;
-  }
-  return true;
+  if (permission !== "granted") throw new Error("Notifications not allowed");
+
+  const sub = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+  });
+
+  return sub;
 }
 
-// Fetch live status from your backend
-async function fetchLineStatus(line) {
-  const res = await fetch(`${STATUS_URL}${encodeURIComponent(line)}`);
-  if (!res.ok) throw new Error(`Status fetch failed: ${res.status}`);
-  const data = await res.json();
-  return data.message || "Status unavailable";
+async function savePreferences(subscription) {
+  const line = document.getElementById("line").value;
+  const notify_time = document.getElementById("time").value; // "HH:MM"
+  const schedule = document.getElementById("schedule").value; // off/weekdays/daily
+
+  const res = await fetch(SAVE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      subscription,
+      line,
+      notify_time,
+      schedule,
+      timezone: "Europe/London",
+    }),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(txt);
+  }
 }
 
 document.getElementById("enable").onclick = async () => {
-  await registerServiceWorker();
-  const ok = await enableNotifications();
-  if (ok) document.getElementById("test").disabled = false;
-};
-
-document.getElementById("test").onclick = async () => {
   try {
-    const line = document.getElementById("line").value;
-    const message = await fetchLineStatus(line);
+    await registerServiceWorker();
+    const sub = await enableAndSubscribe();
+    await savePreferences(sub);
 
-    registration.showNotification("🚇 Tube Status", {
-      body: message,
-    });
+    alert("Saved! You’ll get notifications at your chosen time.");
   } catch (e) {
-    alert(`Could not fetch status: ${e.message}`);
+    alert(`Setup failed: ${e.message}`);
   }
 };
