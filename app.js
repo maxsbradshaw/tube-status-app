@@ -1,3 +1,5 @@
+alert("app.js loaded");
+
 let registration;
 
 // Your Supabase endpoints
