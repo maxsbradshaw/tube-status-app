@@ -3,9 +3,7 @@ self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim(
 
 self.addEventListener("push", (event) => {
   let payload = {};
-  try {
-    payload = event.data ? event.data.json() : {};
-  } catch (_) {}
+  try { payload = event.data ? event.data.json() : {}; } catch (_) {}
 
   const title = payload.title || "🚇 Tube Status";
   const body = payload.body || "Update";
