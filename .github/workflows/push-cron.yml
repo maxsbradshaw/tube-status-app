@@ -1,0 +1,16 @@
+name: Tube push cron
+
+on:
+  schedule:
+    - cron: "* * * * *" # every minute
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Supabase notifier
+        run: |
+          curl -s -X POST "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/send-due-notifications" \
+            -H "Content-Type: application/json" \
+            -d '{}'
