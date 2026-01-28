@@ -31,12 +31,16 @@ async function getVapidPublicKey() {
   const res = await fetch(VAPID_URL);
   if (!res.ok) throw new Error("Could not fetch VAPID key");
   const data = await res.json();
+  if (!data.publicKey) throw new Error("VAPID key response missing publicKey");
   return data.publicKey;
 }
 
 async function subscribeForPush() {
+  if (!("Notification" in window)) throw new Error("Notifications not supported");
+
+  // IMPORTANT: do permission request immediately from the user click context
   const permission = await Notification.requestPermission();
-  if (permission !== "granted") throw new Error("Notifications not allowed");
+  if (permission !== "granted") throw new Error("Notifications not allowed (permission not granted)");
 
   const publicKey = await getVapidPublicKey();
 
@@ -49,9 +53,9 @@ async function subscribeForPush() {
 }
 
 async function savePreferences(subscription) {
-  const line = document.getElementById("line").value;
-  const notify_time = document.getElementById("time").value;      // "HH:MM"
-  const schedule = document.getElementById("schedule").value;     // off/weekdays/daily
+  const line = document.getElementById("line")?.value || "northern";
+  const notify_time = document.getElementById("time")?.value || "07:45";
+  const schedule = document.getElementById("schedule")?.value || "weekdays";
 
   const res = await fetch(SAVE_URL, {
     method: "POST",
@@ -88,45 +92,39 @@ async function fetchLineStatus(line) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Prove JS loaded + wiring ran
+  setStatus("Ready.");
+
   const enableBtn = document.getElementById("enable");
   const disableBtn = document.getElementById("disable");
   const testBtn = document.getElementById("test");
+  const installBtn = document.getElementById("installHelp");
 
-  if (!enableBtn) alert("Missing #enable button");
-  if (!disableBtn) alert("Missing #disable button");
-  if (!testBtn) alert("Missing #test button");
+  // If any of these are missing, you’ll get an immediate alert instead of “nothing works”
+  if (!enableBtn) alert("Missing element: #enable");
+  if (!disableBtn) alert("Missing element: #disable");
+  if (!testBtn) alert("Missing element: #test");
+  if (!installBtn) alert("Missing element: #installHelp");
 
-enableBtn?.addEventListener("click", async () => {
-  try {
-    setStatus("Enabling…");
+  enableBtn?.addEventListener("click", async () => {
+    try {
+      setStatus("Enabling…");
 
-    if (!("Notification" in window)) {
-      throw new Error("Notifications not supported on this device");
+      await registerServiceWorker();
+      const sub = await subscribeForPush();
+      await savePreferences(sub);
+
+      setStatus("Enabled ✅");
+    } catch (e) {
+      setStatus("");
+      alert(`Enable failed: ${e.message}`);
     }
-
-    const permission = await Notification.requestPermission();
-alert(`Permission result: ${permission}`); // <-- temporary
-
-if (permission !== "granted") {
-  throw new Error("Notifications not allowed");
-}
-
-    }
-
-    await registerServiceWorker();
-    const sub = await subscribeForPush();
-    await savePreferences(sub);
-
-    setStatus("Enabled ✅");
-  } catch (e) {
-    setStatus("");
-    alert(`Enable failed: ${e.message}`);
-  }
-});
+  });
 
   disableBtn?.addEventListener("click", async () => {
     try {
       setStatus("Disabling…");
+
       await registerServiceWorker();
 
       const sub = await registration.pushManager.getSubscription();
@@ -138,7 +136,6 @@ if (permission !== "granted") {
       await deleteSubscription(sub.endpoint);
       await sub.unsubscribe();
 
-      testBtn.disabled = true;
       setStatus("Disabled ✅");
     } catch (e) {
       setStatus("");
@@ -147,26 +144,24 @@ if (permission !== "granted") {
   });
 
   testBtn?.addEventListener("click", async () => {
-  try {
-    const line = document.getElementById("line").value;
-    setStatus("Checking…");
-    const message = await fetchLineStatus(line);
-    setStatus(message);
-  } catch (e) {
-    alert(`Check failed: ${e.message}`);
-  }
-});
+    try {
+      const line = document.getElementById("line")?.value || "northern";
+      setStatus("Checking…");
+      const message = await fetchLineStatus(line);
+      setStatus(message);
+    } catch (e) {
+      setStatus("");
+      alert(`Check failed: ${e.message}`);
+    }
+  });
 
-// Install help for iOS (Add to Home Screen)
-document.getElementById("installHelp")?.addEventListener("click", () => {
-  alert(
-    "To install Tube Status:\n\n" +
-    "1) Tap the Share button (square with arrow)\n" +
-    "2) Scroll and tap 'Add to Home Screen'\n" +
-    "3) Open the app from your Home Screen\n\n" +
-    "Tip: After installing, enable notifications inside the app."
-  );
-});
-  
-  setStatus("Ready.");
+  installBtn?.addEventListener("click", () => {
+    alert(
+      "To install on iPhone:\n\n" +
+        "1) Tap the Share button (square with arrow)\n" +
+        "2) Tap 'Add to Home Screen'\n" +
+        "3) Open Tube Status from your Home Screen\n\n" +
+        "Tip: Enable notifications inside the installed app."
+    );
+  });
 });
