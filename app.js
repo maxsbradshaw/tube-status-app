@@ -68,3 +68,35 @@ document.getElementById("enable").onclick = async () => {
     alert(`Setup failed: ${e.message}`);
   }
 };
+
+document.getElementById("disable").onclick = async () => {
+  try {
+    await registerServiceWorker();
+
+    const sub = await registration.pushManager.getSubscription();
+    if (!sub) {
+      alert("No active subscription found on this device.");
+      return;
+    }
+
+    // Remove from backend
+    const res = await fetch(DELETE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: sub.endpoint }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt);
+    }
+
+    // Unsubscribe locally
+    await sub.unsubscribe();
+
+    alert("Notifications disabled.");
+  } catch (e) {
+    alert(`Disable failed: ${e.message}`);
+  }
+};
+
