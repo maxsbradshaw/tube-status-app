@@ -1,49 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="/styles.css" />
   <meta charset="UTF-8" />
   <title>Tube Status</title>
 
-  <!-- Required for iOS PWA -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
   <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
+
 <body>
   <div class="container">
-    <div class="header">
-      <h1>🚇 Tube Status</h1>
-    </div>
+    <h1>🚇 Tube Status</h1>
 
     <div class="card">
-      <div class="field">
-        <span class="label">Line</span>
-        <select id="line">
-          <option value="northern">Northern</option>
-          <option value="central">Central</option>
-          <option value="victoria">Victoria</option>
-          <option value="jubilee">Jubilee</option>
-          <option value="piccadilly">Piccadilly</option>
-          <option value="district">District</option>
-        </select>
-      </div>
+      <label class="label">Line</label>
+      <select id="line">
+        <option value="northern">Northern</option>
+        <option value="central">Central</option>
+        <option value="victoria">Victoria</option>
+        <option value="jubilee">Jubilee</option>
+        <option value="piccadilly">Piccadilly</option>
+        <option value="district">District</option>
+      </select>
 
-      <div class="field">
-        <span class="label">Time</span>
-        <input type="time" id="time" value="07:45" />
-      </div>
+      <label class="label">Time</label>
+      <input type="time" id="time" value="07:45" />
 
-      <div class="field">
-        <span class="label">Notify</span>
-        <select id="schedule">
-          <option value="off">Off</option>
-          <option value="weekdays" selected>Weekdays</option>
-          <option value="daily">Every day</option>
-        </select>
-      </div>
+      <label class="label">Notify</label>
+      <select id="schedule">
+        <option value="off">Off</option>
+        <option value="weekdays" selected>Weekdays</option>
+        <option value="daily">Every day</option>
+      </select>
 
       <div class="buttons">
         <button id="enable" class="primary">Enable notifications</button>
@@ -54,12 +46,8 @@
       <div id="status" class="status"></div>
     </div>
 
-    <div class="footer">
-      Add to Home Screen for notifications on iOS.
-    </div>
+    <!-- Cache bust to avoid iOS PWA keeping old JS -->
+    <script src="app.js?v=100"></script>
   </div>
-
-  <script src="app.js"></script>
 </body>
-
-
+</html>
