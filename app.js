@@ -96,21 +96,29 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!disableBtn) alert("Missing #disable button");
   if (!testBtn) alert("Missing #test button");
 
-  enableBtn?.addEventListener("click", async () => {
-    try {
-      setStatus("Enabling…");
-      await registerServiceWorker();
+enableBtn?.addEventListener("click", async () => {
+  try {
+    setStatus("Enabling…");
 
-      const sub = await subscribeForPush();
-      await savePreferences(sub);
-
-      testBtn.disabled = false;
-      setStatus("Enabled ✅");
-    } catch (e) {
-      setStatus("");
-      alert(`Enable failed: ${e.message}`);
+    if (!("Notification" in window)) {
+      throw new Error("Notifications not supported on this device");
     }
-  });
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      throw new Error("Notification permission denied");
+    }
+
+    await registerServiceWorker();
+    const sub = await subscribeForPush();
+    await savePreferences(sub);
+
+    setStatus("Enabled ✅");
+  } catch (e) {
+    setStatus("");
+    alert(`Enable failed: ${e.message}`);
+  }
+});
 
   disableBtn?.addEventListener("click", async () => {
     try {
