@@ -1,26 +1,20 @@
-alert("app.js loaded");
+window.onerror = (msg, src, line, col) => {
+  alert(`JS error: ${msg} @${line}:${col}`);
+};
 
 let registration;
 
-// Your Supabase endpoints
-const SAVE_URL =
-  "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/save-subscription";
+const SUPABASE_BASE = "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1";
+const VAPID_URL = `${SUPABASE_BASE}/vapid-public-key`;
+const SAVE_URL = `${SUPABASE_BASE}/save-subscription`;
+const DELETE_URL = `${SUPABASE_BASE}/delete-subscription`;
+const STATUS_URL = `${SUPABASE_BASE}/get-line-status?line=`;
 
-// VAPID public key (from secrets → but you need it in the frontend)
-const VAPID_URL =
-  "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/vapid-public-key";
-
-async function getVapidPublicKey() {
-  const res = await fetch(VAPID_URL);
-  if (!res.ok) throw new Error("Could not fetch VAPID public key");
-  const data = await res.json();
-  return data.publicKey;
+function setStatus(text) {
+  const el = document.getElementById("status");
+  if (el) el.textContent = text;
 }
 
-const DELETE_URL =
-  "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/delete-subscription";
-
-// Helper: base64url -> Uint8Array
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -29,29 +23,35 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) throw new Error("Service workers not supported");
   registration = await navigator.serviceWorker.register("/sw.js");
 }
 
-async function enableAndSubscribe() {
+async function getVapidPublicKey() {
+  const res = await fetch(VAPID_URL);
+  if (!res.ok) throw new Error("Could not fetch VAPID key");
+  const data = await res.json();
+  return data.publicKey;
+}
+
+async function subscribeForPush() {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") throw new Error("Notifications not allowed");
 
   const publicKey = await getVapidPublicKey();
 
-const sub = await registration.pushManager.subscribe({
-  userVisibleOnly: true,
-  const publicKey = await getVapidPublicKey();
+  const sub = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicKey),
+  });
 
-const sub = await registration.pushManager.subscribe({
-  userVisibleOnly: true,
-  applicationServerKey: urlBase64ToUint8Array(publicKey),
-});
-
+  return sub;
+}
 
 async function savePreferences(subscription) {
   const line = document.getElementById("line").value;
-  const notify_time = document.getElementById("time").value; // "HH:MM"
-  const schedule = document.getElementById("schedule").value; // off/weekdays/daily
+  const notify_time = document.getElementById("time").value;      // "HH:MM"
+  const schedule = document.getElementById("schedule").value;     // off/weekdays/daily
 
   const res = await fetch(SAVE_URL, {
     method: "POST",
@@ -65,52 +65,85 @@ async function savePreferences(subscription) {
     }),
   });
 
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(txt);
-  }
+  const txt = await res.text();
+  if (!res.ok) throw new Error(txt);
 }
 
-document.getElementById("enable").onclick = async () => {
-  try {
-    await registerServiceWorker();
-    const sub = await enableAndSubscribe();
-    await savePreferences(sub);
+async function deleteSubscription(endpoint) {
+  const res = await fetch(DELETE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint }),
+  });
 
-    alert("Saved! You’ll get notifications at your chosen time.");
-  } catch (e) {
-    alert(`Setup failed: ${e.message}`);
-  }
-};
+  const txt = await res.text();
+  if (!res.ok) throw new Error(txt);
+}
 
-document.getElementById("disable").onclick = async () => {
-  try {
-    await registerServiceWorker();
+async function fetchLineStatus(line) {
+  const res = await fetch(`${STATUS_URL}${encodeURIComponent(line)}`);
+  if (!res.ok) throw new Error(`Status fetch failed: ${res.status}`);
+  const data = await res.json();
+  return data.message || "Status unavailable";
+}
 
-    const sub = await registration.pushManager.getSubscription();
-    if (!sub) {
-      alert("No active subscription found on this device.");
-      return;
+document.addEventListener("DOMContentLoaded", () => {
+  const enableBtn = document.getElementById("enable");
+  const disableBtn = document.getElementById("disable");
+  const testBtn = document.getElementById("test");
+
+  if (!enableBtn) alert("Missing #enable button");
+  if (!disableBtn) alert("Missing #disable button");
+  if (!testBtn) alert("Missing #test button");
+
+  enableBtn?.addEventListener("click", async () => {
+    try {
+      setStatus("Enabling…");
+      await registerServiceWorker();
+
+      const sub = await subscribeForPush();
+      await savePreferences(sub);
+
+      testBtn.disabled = false;
+      setStatus("Enabled ✅");
+    } catch (e) {
+      setStatus("");
+      alert(`Enable failed: ${e.message}`);
     }
+  });
 
-    // Remove from backend
-    const res = await fetch(DELETE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint: sub.endpoint }),
-    });
+  disableBtn?.addEventListener("click", async () => {
+    try {
+      setStatus("Disabling…");
+      await registerServiceWorker();
 
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt);
+      const sub = await registration.pushManager.getSubscription();
+      if (!sub) {
+        setStatus("Already disabled.");
+        return;
+      }
+
+      await deleteSubscription(sub.endpoint);
+      await sub.unsubscribe();
+
+      testBtn.disabled = true;
+      setStatus("Disabled ✅");
+    } catch (e) {
+      setStatus("");
+      alert(`Disable failed: ${e.message}`);
     }
+  });
 
-    // Unsubscribe locally
-    await sub.unsubscribe();
+  testBtn?.addEventListener("click", async () => {
+    try {
+      await registerServiceWorker();
+      const line = document.getElementById("line").value;
+      const message = await fetchLineStatus(line);
+      registration.showNotification("🚇 Tube Status", { body: message });
+    } catch (e) {
+      alert(`Test failed: ${e.message}`);
+    }
+  });
 
-    alert("Notifications disabled.");
-  } catch (e) {
-    alert(`Disable failed: ${e.message}`);
-  }
-};
-
+  setStatus("Ready.");
+});
