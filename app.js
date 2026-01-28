@@ -7,6 +7,9 @@ const SAVE_URL =
 // VAPID public key (from secrets → but you need it in the frontend)
 const VAPID_PUBLIC_KEY = "BKM02271RwNzLQj7-CF9DxQIVfTCgLSxnJ0edL0_BpFCvMI70mrTax9lybBW8j95AzPu4TMFR-w9QA2CnxV6PkQ";
 
+const DELETE_URL =
+  "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/delete-subscription";
+
 // Helper: base64url -> Uint8Array
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
