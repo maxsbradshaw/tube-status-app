@@ -14,9 +14,30 @@
 <body>
   <h1>🚇 Tube Status</h1>
 
+  <label>
+    Line
+    <select id="line">
+      <option value="northern">Northern</option>
+      <option value="central">Central</option>
+      <option value="victoria">Victoria</option>
+      <option value="jubilee">Jubilee</option>
+      <option value="piccadilly">Piccadilly</option>
+      <option value="district">District</option>
+    </select>
+  </label>
+
+  <br /><br />
+
+  <label>
+    Time
+    <input type="time" id="time" value="07:45" />
+  </label>
+
+  <br /><br />
+
   <button id="enable">Enable notifications</button>
   <button id="test" disabled>Send test notification</button>
 
   <script src="app.js"></script>
 </body>
-</html>
+
