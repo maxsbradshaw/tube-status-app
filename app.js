@@ -5,7 +5,15 @@ const SAVE_URL =
   "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/save-subscription";
 
 // VAPID public key (from secrets → but you need it in the frontend)
-const VAPID_PUBLIC_KEY = "BKM02271RwNzLQj7-CF9DxQIVfTCgLSxnJ0edL0_BpFCvMI70mrTax9lybBW8j95AzPu4TMFR-w9QA2CnxV6PkQ";
+const VAPID_URL =
+  "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/vapid-public-key";
+
+async function getVapidPublicKey() {
+  const res = await fetch(VAPID_URL);
+  if (!res.ok) throw new Error("Could not fetch VAPID public key");
+  const data = await res.json();
+  return data.publicKey;
+}
 
 const DELETE_URL =
   "https://kmjotlvmewrrswzooayg.supabase.co/functions/v1/delete-subscription";
@@ -26,10 +34,12 @@ async function enableAndSubscribe() {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") throw new Error("Notifications not allowed");
 
-  const sub = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-  });
+  const publicKey = await getVapidPublicKey();
+
+const sub = await registration.pushManager.subscribe({
+  userVisibleOnly: true,
+  applicationServerKey: urlBase64ToUint8Array(publicKey),
+});
 
   return sub;
 }
