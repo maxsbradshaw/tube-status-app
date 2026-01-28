@@ -145,5 +145,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+// Install help for iOS (Add to Home Screen)
+document.getElementById("installHelp")?.addEventListener("click", () => {
+  alert(
+    "To install Tube Status:\n\n" +
+    "1) Tap the Share button (square with arrow)\n" +
+    "2) Scroll and tap 'Add to Home Screen'\n" +
+    "3) Open the app from your Home Screen\n\n" +
+    "Tip: After installing, enable notifications inside the app."
+  );
+});
+  
   setStatus("Ready.");
 });
