@@ -135,15 +135,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   testBtn?.addEventListener("click", async () => {
-    try {
-      await registerServiceWorker();
-      const line = document.getElementById("line").value;
-      const message = await fetchLineStatus(line);
-      registration.showNotification("🚇 Tube Status", { body: message });
-    } catch (e) {
-      alert(`Test failed: ${e.message}`);
-    }
-  });
+  try {
+    const line = document.getElementById("line").value;
+    setStatus("Checking…");
+    const message = await fetchLineStatus(line);
+    setStatus(message);
+  } catch (e) {
+    alert(`Check failed: ${e.message}`);
+  }
+});
 
   setStatus("Ready.");
 });
